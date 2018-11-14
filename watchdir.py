@@ -31,6 +31,22 @@ def main(client=None, post_process=None):
         worker: uses transmission-cli
         post_process: append '.added' suffix to torrent file name
     '''
+    if post_process is None:
+        post_process = rename
+
+    args = get_arguments()
+    for dirname in (args.watchdir, args.destination):
+        if not os.path.exists(dirname):
+            log.info('creating directory: {}'.format(dirname))
+            os.makedirs(dirname)
+
+    for torrent in watch_torrents(args.watchdir):
+        if download(torrent, args.destination, worker=client):
+            post_process(torrent)
+
+
+def get_arguments():
+    '''Parse command line arguments for watchdir script'''
     cmdline = ArgumentParser(
         description='Watch for new torrent files in the specified directory',
         epilog='If any of the provided directories do not exist, they will be created',
@@ -45,19 +61,7 @@ def main(client=None, post_process=None):
         metavar='DESTINATION',
         help='Path to download destination',
     )
-    args = cmdline.parse_args()
-
-    for dirname in (args.watchdir, args.destination):
-        if not os.path.exists(dirname):
-            log.info('creating directory: {}'.format(dirname))
-            os.makedirs(dirname)
-
-    if post_process is None:
-        post_process = rename
-
-    for torrent in watch_torrents(args.watchdir):
-        if download(torrent, args.destination, worker=client):
-            post_process(torrent)
+    return cmdline.parse_args()
 
 
 def download(torrent, destination, max_retries=5, worker=None):
