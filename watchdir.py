@@ -9,6 +9,7 @@ Relies on inotify mechanism provided by Linux kernel
 import logging
 import os.path
 import re
+from argparse import ArgumentParser
 from subprocess import Popen
 from time import sleep
 
@@ -19,7 +20,7 @@ logging.basicConfig()
 log = logging.getLogger(__name__)
 
 
-def main(client=None, post_process=None):  # TODO: commandline arguments
+def main(client=None, post_process=None):
     '''
     Watch a directory for new torrent files and add them to the client
 
@@ -30,13 +31,32 @@ def main(client=None, post_process=None):  # TODO: commandline arguments
         worker: uses transmission-cli
         post_process: append '.added' suffix to torrent file name
     '''
-    destination = '/sample/destination'
+    cmdline = ArgumentParser(
+        description='Watch for new torrent files in the specified directory',
+        epilog='If any of the provided directories do not exist, they will be created',
+    )
+    cmdline.add_argument(
+        'watchdir',
+        metavar='WATCHDIR',
+        help='Path to watch directory with torrent files',
+    )
+    cmdline.add_argument(
+        'destination',
+        metavar='DESTINATION',
+        help='Path to download destination',
+    )
+    args = cmdline.parse_args()
+
+    for dirname in (args.watchdir, args.destination):
+        if not os.path.exists(dirname):
+            log.info('creating directory: {}'.format(dirname))
+            os.makedirs(dirname)
 
     if post_process is None:
         post_process = rename
 
-    for torrent in watch_torrents('/tmp/test'):
-        if download(torrent, destination, worker=client):
+    for torrent in watch_torrents(args.watchdir):
+        if download(torrent, args.destination, worker=client):
             post_process(torrent)
 
 
