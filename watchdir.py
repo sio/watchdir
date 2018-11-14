@@ -16,7 +16,7 @@ from time import sleep
 from inotify.adapters import Inotify
 
 
-logging.basicConfig()
+logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
 
