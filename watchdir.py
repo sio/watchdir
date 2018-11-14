@@ -103,7 +103,7 @@ def watch_torrents(*directories):
     Yield file paths for new torrent files in any of the provided directories.
     This generator does not quit unless interrupted by an exception.
     '''
-    torrent = re.compile(r'.*\.torrent', re.IGNORECASE)
+    torrent = re.compile(r'.*\.torrent$', re.IGNORECASE)
 
     watcher = Inotify()
     for dirname in directories:
