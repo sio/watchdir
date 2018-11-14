@@ -9,6 +9,7 @@ Relies on inotify mechanism provided by Linux kernel
 import logging
 import os.path
 import re
+from subprocess import Popen
 from time import sleep
 
 from inotify.adapters import Inotify
@@ -75,8 +76,21 @@ def download_with_transmission(torrent, destination):
     '''
     Transmission-specific downloading logic
     '''
-    # TODO: call transmission-cli
-    print('Downloading {} to {}'.format(torrent, destination))
+    log.info('Downloading {} to {}'.format(torrent, destination))
+    process = Popen([
+        'transmission-remote',
+        '--add',
+        torrent,
+        '--download-dir',
+        destination,
+    ])
+    exit_code = process.wait()
+    if exit_code != 0:
+        raise ExitCodeError('transmission-remote exited with code {}'.format(exit_code))
+
+
+class ExitCodeError(Exception):
+    '''Raised when subprocess signals about error via exit code'''
 
 
 def rename(torrent, suffix='.added'):
