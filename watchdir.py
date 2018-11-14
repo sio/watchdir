@@ -18,11 +18,25 @@ logging.basicConfig()
 log = logging.getLogger(__name__)
 
 
-def main():  # TODO: commandline arguments
+def main(client=None, post_process=None):  # TODO: commandline arguments
+    '''
+    Watch a directory for new torrent files and add them to the client
+
+    Arguments allow to customize which client is used and how to process
+    torrent files after adding.
+
+    Default behavior
+        worker: uses transmission-cli
+        post_process: append '.added' suffix to torrent file name
+    '''
     destination = '/sample/destination'
+
+    if post_process is None:
+        post_process = rename
+
     for torrent in watch_torrents('/tmp/test'):
-        if download(torrent, destination):
-            post_download(torrent)
+        if download(torrent, destination, worker=client):
+            post_process(torrent)
 
 
 def download(torrent, destination, max_retries=5, worker=None):
@@ -65,12 +79,9 @@ def download_with_transmission(torrent, destination):
     print('Downloading {} to {}'.format(torrent, destination))
 
 
-def post_download(torrent):
-    '''
-    Process the torrent file after adding it to the client
-    '''
-    # TODO: rename/move torrent file after adding
-    print('Post-processing for {}'.format(torrent))
+def rename(torrent, suffix='.added'):
+    '''Rename the torrent file after adding it to the client'''
+    os.rename(torrent, torrent + suffix)
 
 
 def watch_torrents(*directories):
