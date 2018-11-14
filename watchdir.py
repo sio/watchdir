@@ -74,6 +74,7 @@ def download(torrent, destination, max_retries=5, worker=None):
     if worker is None:
         worker = download_with_transmission
 
+    log.info('Downloading {} to {}'.format(torrent, destination))
     retry = 0
     success = False
     while retry < max_retries:
@@ -100,7 +101,6 @@ def download_with_transmission(torrent, destination):
     '''
     Transmission-specific downloading logic
     '''
-    log.info('Downloading {} to {}'.format(torrent, destination))
     process = Popen([
         'transmission-remote',
         '--add',
