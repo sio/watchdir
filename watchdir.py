@@ -104,9 +104,9 @@ def download_with_transmission(torrent, destination):
     process = Popen([
         'transmission-remote',
         '--add',
-        torrent,
+        os.path.abspath(torrent),
         '--download-dir',
-        destination,
+        os.path.abspath(destination),
     ])
     exit_code = process.wait()
     if exit_code != 0:
