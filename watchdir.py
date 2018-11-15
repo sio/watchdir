@@ -10,7 +10,7 @@ import logging
 import os.path
 import re
 from argparse import ArgumentParser
-from subprocess import Popen
+from subprocess import Popen, PIPE
 from time import sleep
 
 from inotify.adapters import Inotify
@@ -107,9 +107,10 @@ def download_with_transmission(torrent, destination):
         os.path.abspath(torrent),
         '--download-dir',
         os.path.abspath(destination),
-    ])
+    ], stdout=PIPE, stderr=PIPE)
     exit_code = process.wait()
     if exit_code != 0:
+        log.error(process.communicate()[1].decode())
         raise ExitCodeError('transmission-remote exited with code {}'.format(exit_code))
 
 
