@@ -143,7 +143,7 @@ def watch_torrents(*directories):
             and torrent.match(filename):
                 yield os.path.join(path, filename)
     except KeyboardInterrupt:
-        return []
+        raise StopIteration
 
 
 if __name__ == '__main__':
