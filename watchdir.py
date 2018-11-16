@@ -9,6 +9,7 @@ Relies on inotify mechanism provided by Linux kernel
 import logging
 import os
 import re
+import sys
 from argparse import ArgumentParser
 from subprocess import Popen, PIPE
 from time import sleep
@@ -41,7 +42,7 @@ def main(client=None, post_process=None):
             os.makedirs(dirname)
 
     for torrent in watch_torrents(args.watchdir):
-        if download(torrent, args.destination, worker=client):
+        if download(torrent, args.destination, worker=client, extra_args=args.extras):
             post_process(torrent)
 
 
@@ -61,12 +62,33 @@ def get_arguments():
         metavar='DESTINATION',
         help='Path to download destination',
     )
-    return cmdline.parse_args()
+    cmdline.add_argument(
+        'extras',
+        nargs='*',
+        help='Any extra arguments will be passed to the torrent client "as is"',
+    )
+    args = cmdline.parse_args(sys.argv[1:3])
+    args.extras = sys.argv[3:]  # we do not need to parse these
+    return args
 
 
-def download(torrent, destination, max_retries=5, worker=None):
+def download(torrent, destination, max_retries=5, worker=None, extra_args=None):
     '''
     Add torrent file to the client with specified destination directory.
+
+    Parameters
+        torrent
+            Torrent file path
+        destination
+            Download directory path
+        max_retries
+            Maximum number of retries if worker fails
+        worker
+            The function that does actual work (adds torrent file to client).
+            Uses transmission-remote by default.
+        extra_args
+            Sequence of extra arguments to pass to worker on each invokation
+
     Returns False if downloading was not successful, otherwise True.
     '''
     RETRY_DELAY = 1
@@ -79,7 +101,7 @@ def download(torrent, destination, max_retries=5, worker=None):
     success = False
     while retry < max_retries:
         try:
-            worker(torrent, destination)
+            worker(torrent, destination, extra_args=extra_args)
             success = True
             break
         except Exception as e:
@@ -97,9 +119,11 @@ def download(torrent, destination, max_retries=5, worker=None):
     return success
 
 
-def download_with_transmission(torrent, destination):
+def download_with_transmission(torrent, destination, extra_args=None):
     '''
     Transmission-specific downloading logic
+
+    Extra args are passed to transmission-remote verbatim.
 
     Daemon RPC credentials can be set via TR_HOST and TR_AUTH environment
     variables.
@@ -118,6 +142,9 @@ def download_with_transmission(torrent, destination):
     ]
     if os.environ.get('TR_AUTH'):
         command.append('--authenv')
+
+    if extra_args:
+        command += list(extra_args)
 
     process = Popen(command, stdout=PIPE, stderr=PIPE)
     exit_code = process.wait()
