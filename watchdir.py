@@ -7,7 +7,7 @@ Relies on inotify mechanism provided by Linux kernel
 
 
 import logging
-import os.path
+import os
 import re
 from argparse import ArgumentParser
 from subprocess import Popen, PIPE
@@ -100,14 +100,26 @@ def download(torrent, destination, max_retries=5, worker=None):
 def download_with_transmission(torrent, destination):
     '''
     Transmission-specific downloading logic
+
+    Daemon RPC credentials can be set via TR_HOST and TR_AUTH environment
+    variables.
     '''
-    process = Popen([
+    host = os.environ.get('TR_HOST')
+    if not host:
+        host = 'localhost:9091'
+
+    command = [
         'transmission-remote',
+        host,
         '--add',
         os.path.abspath(torrent),
         '--download-dir',
         os.path.abspath(destination),
-    ], stdout=PIPE, stderr=PIPE)
+    ]
+    if os.environ.get('TR_AUTH'):
+        command.append('--authenv')
+
+    process = Popen(command, stdout=PIPE, stderr=PIPE)
     exit_code = process.wait()
     if exit_code != 0:
         log.error(process.communicate()[1].decode())
