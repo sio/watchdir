@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='watchdir',
-    version='0.1.0-git',
+    version='1.0.0',
     description='Use multiple watch directories with any torrent client',
     url='https://github.com/sio/watchdir',
     author='Vitaly Potyarkin',
